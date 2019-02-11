@@ -21,7 +21,6 @@
 //#include "stdio.h"
 #include "stdlib.h"
 #include "F2837xD_gpio.h"
-#include <sgen.h>
 
 //
 // Defines
@@ -148,8 +147,6 @@ void scia_fifo_init(void);
 void error(void);
 
 
-
-SGENTI_1 sgen=SGENTI_1_DEFAULTS;
 
 //
 // Main
@@ -285,14 +282,6 @@ void main(void){
 //        testSend[a] = '\0';
 //    }
 
-
-
-    sgen.offset=sgen.offset = 0 * 0x7FFF; // Range(Q15) = 0x8000 -> 0x7FFF (-1 to 1);
-    sgen.gain=sgen.gain = 1 * 0x7FFF;   // Range(Q15) = 0x0000 -> 0x7FFF (0 to 1)
-    sgen.freq=5369; /* freq = (Required Freq/Max Freq)*2^15 */
-    /* = (50/305.17)*2^15 = 5369 */
-    sgen.step_max=1000; /* Max Freq= (step_max * sampling freq)/65536 */
-    /* Max Freq = (1000*20k)/65536 = 305.17 */
 
 
 
@@ -779,10 +768,7 @@ interrupt void adca0_isr(void){
 
     HRPWMupdatePhases(phi, dPhi);                        //set pwm
 
-
-    sgen.calc(&sgen);
-
-    DacbRegs.DACVALS.bit.DACVALS = sgen.out;       //max = 4095
+    DacbRegs.DACVALS.bit.DACVALS = 2048;       //max = 4095
 
 //    DacbRegs.DACVALS.bit.DACVALS = uC2 * DACgain + DACoffset;       //max = 4095
 
