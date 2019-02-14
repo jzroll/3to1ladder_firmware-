@@ -9,6 +9,7 @@
 //changed linker file!!!
 //C:\ti\controlSUITE\device_support\F2837xD\v210\F2837xD_common\cmd\2837xD_RAM_lnk_cpu1.cmd
 
+//test
 
 //
 // Included Files
@@ -25,13 +26,13 @@
 
 //ACTIVATE JUST ONE: CLOSE_LOOP_MODE
 //                  OR OPEN_LOOP_PERTURBATION_MODE
-//                  OR STEP_RESPONSE_MODE!!!!!!!!!!!!!!!!!
+//                  OR STEP_RESPONSE_MODE!!!!!!!!!!!!!
 #define CLOSE_LOOP_MODE
 //#define CLOSE_LOOP_PERTURBATION_MODE  //can be activated with CONTROL_LOOP_MODE
 //#define OPEN_LOOP_PERTURBATION_MODE
 //#define STEP_RESPONSE_MODE
 //float32 beforeStep = 1.4;
-//float32 afterSpep = 1.6;
+//float32 afterStep = 1.6;
 ////////////////////////////////////
 
 // Defines
@@ -91,14 +92,14 @@ Uint16 rampDown = 0;
 
 
 //Uout control loop values
-float32 KP_PHI = 0.05;
-float32 KI_PHI = 6;
+float32 KP_PHI = 0.02;
+float32 KI_PHI = 1000;
 float32 ADC_UOUT_GAIN = 0.003661;
 float32 ADC_UOUT_OFFSET = 0.003590;
 
 
 float32 eSumPhi = 0;
-float32 uOutTarget = 4.0;
+float32 uOutTarget = 12.0;
 float32 ePhi = 0;
 float32 phi = 0;
 float32 uOut = 0;
@@ -107,12 +108,12 @@ float32 upperPhiLimit = 0;
 
 //C2 control loop values
 float32 KP_DPHI = 0.01;
-float32 KI_DPHI = 0.5;
+float32 KI_DPHI = 100;
 float32 ADC_UC2_GAIN = 0.003659;
 float32 ADC_UC2_OFFSET = -0.017504;
 
 float32 eSumdPhi = 0;
-float32 uC2Target = 4.0;
+float32 uC2Target = 12.0;
 float32 edPhi = 0;
 float32 dPhi = 0;
 float32 uC2 = 0;
@@ -164,7 +165,6 @@ void scia_fifo_init(void);
 void error(void);
 
 SGENTI_1 sgen=SGENTI_1_DEFAULTS;
-
 
 void main(void){
     // Initialize System Control for Control and Analog Subsystems
@@ -284,6 +284,8 @@ void main(void){
 
     for(;;){
         GPIO_WritePin(DEBUG_PIN2, 1);
+        AdcbRegs.ADCINTOVFCLR.bit.ADCINT1 = 1;      //clear INT1 flag ADC A
+
 
 
 
@@ -749,6 +751,7 @@ void ConfigureADC(void){
 
     AdcbRegs.ADCINTSEL1N2.bit.INT1SEL = 0;      // end of ADC-B will set INT1 flag
     AdcbRegs.ADCINTSEL1N2.bit.INT1E = 1;        // enable INT1 flag
+    AdcbRegs.ADCINTSEL1N2.bit.INT1CONT = 1;
 
     AdcbRegs.ADCCTL2.bit.PRESCALE = 6;          //set ADCCLK divider to /4, Max ADCCLK is 50MHz -> /4
     AdcSetMode(ADC_ADCB, ADC_RESOLUTION_12BIT, ADC_SIGNALMODE_SINGLE);
@@ -844,7 +847,7 @@ interrupt void adca0_isr(void){
 
     #endif  //---------------------------------------------------------------------------------------
 
-    //###########################################################################################
+    //############################################################################################
     //if PERTURBATION_MODE is defined the control loop is not active
     //this mode is used to measure the transfer function of the converter without controller
     #ifdef OPEN_LOOP_PERTURBATION_MODE
@@ -867,15 +870,7 @@ interrupt void adca0_isr(void){
         //###########################################################################################
         //if STEP_RESPONSE_MODE is defined the control loop is not active
         //this mode is used to measure the step response of the converter without controller
-        #ifdef STEP_RESPONSE_MODE
-
-
-
-        else{
-            phiTemp = beforeStep;
-        }
-        HRPWMupdatePhases(phiTemp, dPhiTemp);           //set pwm
-
+    #ifdef STEP_RESPONSE_MODE
 
         //as soon as serial command set "stabilityStartMeasure=1" the measurement begins
         if((stabilityStartMeasure ==  1) & (stabilityCounter < stabilityBufferSize)){
@@ -884,13 +879,22 @@ interrupt void adca0_isr(void){
             stabilityCounter++;
         }
 
+        if(stabilityStartMeasure == 1){
+            phiTemp = afterStep;
+        }
+        else{
+            phiTemp = beforeStep;
+        }
+        HRPWMupdatePhases(phiTemp, dPhiTemp);           //set pwm
+
         DacbRegs.DACVALS.bit.DACVALS = phiTemp * 406;  //scale DAC phi=10% => DAC_max_out=3V (DAC_max_digital = 4095)
 
-        #endif //----------------------------------------------------------------------------------------
+   #endif //----------------------------------------------------------------------------------------
 
 
 
-    AdcaRegs.ADCINTFLGCLR.bit.ADCINT1 = 1;   //clear INT1 flag ADC A
+    AdcaRegs.ADCINTFLGCLR.bit.ADCINT1 = 1;      //clear INT1 flag ADC A
+    AdcbRegs.ADCINTOVFCLR.bit.ADCINT1 = 1;      //clear INT1 flag ADC B
     AdcbRegs.ADCINTFLGCLR.bit.ADCINT1 = 1;      //clear INT1 flag ADC B
     PieCtrlRegs.PIEACK.all = PIEACK_GROUP1;
 
