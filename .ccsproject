@@ -9,5 +9,5 @@
 	<rts value="libc.a"/>
 	<templateProperties value="id=com.ti.common.project.core.emptyProjectTemplate,"/>
 	<isTargetManual value="false"/>
-	<origin value="C:/ti/controlSUITE/device_support/F2837xD/v210/F2837xD_examples_Cpu1/blinky/cpu01/ccs"/>
+	<origin value="C:/Users/chris/Google Drive/Roman_030719/SAB_converter/Software/3-to-1_Ladder"/>
 </projectOptions>
